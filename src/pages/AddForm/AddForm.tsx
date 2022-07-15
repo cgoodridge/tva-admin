@@ -19,8 +19,16 @@ const AddForm = () => {
     const [extraText, setExtraText] = useState('');
     const [eventLocation, setEventLocation] = useState('');
 
-    const onLoginClicked = async () => {
-        alert('Login not ready yet');
+    const addNexusEvent = async () => {
+        const result = await fetch(`/api/nexus-events/${eventTitle}/add-event`,
+            {
+                method: 'post',
+                body: JSON.stringify({bodyText, eventTitle}),
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+                
+            });
     };
 
     return (
@@ -56,10 +64,10 @@ const AddForm = () => {
             <Grid item>
                 <TextField id="changedText" value={changedText} onChange={e => setChangedText(e.target.value)} label="Changed Text" variant="standard" margin="dense" />
             </Grid>
-            
+
             <Grid>
                 {errorMessage && <div className="fail">{errorMessage}</div>}
-                <Button variant="outlined" disabled={!eventDate || !eventTime || !eventLocation} onClick={onLoginClicked}>Submit</Button>
+                <Button variant="outlined" disabled={!eventDate || !eventTime || !eventLocation} onClick={addNexusEvent}>Submit</Button>
             </Grid>
         </Grid>
 
