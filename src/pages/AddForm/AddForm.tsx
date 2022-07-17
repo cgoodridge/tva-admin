@@ -13,22 +13,25 @@ const AddForm = () => {
     const [bodyText, setBodyText] = useState('');
     const [introText, setIntroText] = useState('');
     const [changedText, setChangedText] = useState('');
-    const [notableChanges, setNotableChanges] = useState([]);
+    const [notableChanges, setNotableChanges] = useState('');
     const [originalText, setOriginalText] = useState('');
     const [scenarioText, setScenarioText] = useState('');
     const [extraText, setExtraText] = useState('');
     const [eventLocation, setEventLocation] = useState('');
 
     const addNexusEvent = async () => {
-        const result = await fetch(`/api/nexus-events/${eventTitle}/add-event`,
+        const result = await fetch(`/api/nexus-events/add-event`,
             {
                 method: 'post',
-                body: JSON.stringify({bodyText, eventTitle}),
+                body: JSON.stringify({eventDate, eventTime, introText, changedText, notableChanges, originalText, scenarioText, extraText, eventLocation, bodyText, eventTitle}),
                 headers: {
                     'Content-Type': 'application/json',
                 }
                 
             });
+
+        const body = await result.json();
+
     };
 
     return (
@@ -38,10 +41,10 @@ const AddForm = () => {
                 Add New Nexus Event
             </Typography>
             <Grid item>
-                <TextField id="eventDate" value={eventDate} onChange={e => setEventDate(e.target.value)} label="Event Date" variant="standard" margin="dense" />
+                <TextField id="eventDate" value={eventDate} onChange={e => setEventDate(e.target.value)} label="" type='date' variant="standard" margin="dense" />
             </Grid>
             <Grid item>
-                <TextField id="eventTime" value={eventTime} onChange={e => setEventTime(e.target.value)} label="Event Time" variant="standard" margin="dense" />
+                <TextField id="eventTime" value={eventTime} onChange={e => setEventTime(e.target.value)} label="" type='time' variant="standard" margin="dense" />
             </Grid>
             <Grid item>
                 <TextField id="eventLocation" value={eventLocation} onChange={e => setEventLocation(e.target.value)} label="Event Location" variant="standard" margin="dense" />
@@ -63,6 +66,12 @@ const AddForm = () => {
             </Grid>
             <Grid item>
                 <TextField id="changedText" value={changedText} onChange={e => setChangedText(e.target.value)} label="Changed Text" variant="standard" margin="dense" />
+            </Grid>
+            <Grid item>
+                <TextField id="changedText" value={notableChanges} onChange={e => setNotableChanges(e.target.value)} label="Notable Changes" variant="standard" margin="dense" />
+            </Grid>
+            <Grid item>
+                <TextField id="changedText" value={extraText} onChange={e => setExtraText(e.target.value)} label="Extra Text" variant="standard" margin="dense" />
             </Grid>
 
             <Grid>
