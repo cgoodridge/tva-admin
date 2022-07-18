@@ -25,7 +25,7 @@ const AddForm = () => {
                 method: 'post',
                 body: JSON.stringify({bodyText, eventTitle}),
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json', 
                 }
                 
             });
