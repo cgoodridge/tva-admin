@@ -3,11 +3,16 @@ import TextField from '@mui/material/TextField';
 import { Grid } from "@mui/material";
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 const AddForm = () => {
 
     const [errorMessage, setErrorMessage] = useState('');
-    const [eventDate, setEventDate] = useState('');
+
+    const [eventDateTime, setEventDateTime] = useState<Date | null>(new Date());
     const [eventTime, setEventTime] = useState('');
     const [eventTitle, setEventTitle] = useState('');
     const [bodyText, setBodyText] = useState('');
@@ -18,20 +23,31 @@ const AddForm = () => {
     const [scenarioText, setScenarioText] = useState('');
     const [extraText, setExtraText] = useState('');
     const [eventLocation, setEventLocation] = useState('');
+    console.log(eventDateTime);
 
     const addNexusEvent = async () => {
-        console.log(eventTitle);
         const result = await fetch(`/api/nexus-events/add-event`,
             {
                 method: 'post',
-                body: JSON.stringify({eventDate, eventTime, introText, changedText, notableChanges, originalText, scenarioText, extraText, eventLocation, bodyText, eventTitle}),
+                body: JSON.stringify({ eventDateTime, introText, changedText, notableChanges, originalText, scenarioText, extraText, eventLocation, bodyText, eventTitle }),
                 headers: {
-                    'Content-Type': 'application/json', 
+                    'Content-Type': 'application/json',
                 }
-                
+
             });
 
         const body = await result.json();
+
+        setEventDateTime(null);
+        setEventTitle('');
+        setBodyText('');
+        setIntroText('');
+        setChangedText('');
+        setNotableChanges('');
+        setOriginalText('');
+        setScenarioText('');
+        setExtraText('');
+        setEventLocation('');
 
     };
 
@@ -42,22 +58,28 @@ const AddForm = () => {
                 Add New Nexus Event
             </Typography>
             <Grid item>
-                <TextField id="eventDate" value={eventDate} onChange={e => setEventDate(e.target.value)} label="" type='date' variant="standard" margin="dense" />
-            </Grid>
-            <Grid item>
-                <TextField id="eventTime" value={eventTime} onChange={e => setEventTime(e.target.value)} label="" type='time' variant="standard" margin="dense" />
-            </Grid>
-            <Grid item>
-                <TextField id="eventLocation" value={eventLocation} onChange={e => setEventLocation(e.target.value)} label="Event Location" variant="standard" margin="dense" />
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                    <DateTimePicker
+                        renderInput={(props) => <TextField {...props} />}
+                        label="DateTimePicker"
+                        value={eventDateTime}
+                        onChange={(e) => {
+                            setEventDateTime(e);
+                        }}
+                    />
+                </LocalizationProvider>
             </Grid>
             <Grid item>
                 <TextField id="eventTitle" value={eventTitle} onChange={e => setEventTitle(e.target.value)} label="Event Title" variant="standard" margin="dense" />
             </Grid>
             <Grid item>
+                <TextField id="eventLocation" value={eventLocation} onChange={e => setEventLocation(e.target.value)} label="Event Location" variant="standard" margin="dense" />
+            </Grid>
+            <Grid item>
                 <TextField id="introText" value={introText} onChange={e => setIntroText(e.target.value)} label="Intro Text" variant="standard" margin="dense" />
             </Grid>
             <Grid item>
-                <TextField id="bodyText" value={bodyText} onChange={e => setBodyText(e.target.value)} label="Body Text" variant="standard" margin="dense" />
+                <TextField id="bodyText" value={bodyText} onChange={e => setBodyText(e.target.value)} label="Body Text" variant="standard" type="textarea" multiline margin="dense" />
             </Grid>
             <Grid item>
                 <TextField id="scenarioText" value={scenarioText} onChange={e => setScenarioText(e.target.value)} label="Scenario Text" variant="standard" margin="dense" />
@@ -77,7 +99,7 @@ const AddForm = () => {
 
             <Grid>
                 {errorMessage && <div className="fail">{errorMessage}</div>}
-                <Button variant="outlined" disabled={!eventDate || !eventTime || !eventLocation} onClick={addNexusEvent}>Submit</Button>
+                <Button variant="outlined" disabled={!eventDateTime || !eventLocation} onClick={addNexusEvent}>Submit</Button>
             </Grid>
         </Grid>
 
