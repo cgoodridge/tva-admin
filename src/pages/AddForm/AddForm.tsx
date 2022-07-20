@@ -20,6 +20,7 @@ const AddForm = () => {
     const [eventLocation, setEventLocation] = useState('');
 
     const addNexusEvent = async () => {
+        console.log(eventTitle);
         const result = await fetch(`/api/nexus-events/add-event`,
             {
                 method: 'post',
