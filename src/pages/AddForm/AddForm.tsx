@@ -23,7 +23,7 @@ const AddForm = () => {
     const [scenarioText, setScenarioText] = useState('');
     const [extraText, setExtraText] = useState('');
     const [eventLocation, setEventLocation] = useState('');
-    console.log(eventDateTime);
+    
 
     const addNexusEvent = async () => {
         const result = await fetch(`/api/nexus-events/add-event`,
