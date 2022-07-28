@@ -18,6 +18,7 @@ const AddForm = () => {
 
     const [eventDateTime, setEventDateTime] = useState<Date | null>(new Date());
     const [eventTime, setEventTime] = useState('');
+    const [releaseDate, setReleaseDate] = useState('');
     const [eventTitle, setEventTitle] = useState('');
     const [bodyText, setBodyText] = useState('');
     const [introText, setIntroText] = useState('');
@@ -36,7 +37,8 @@ const AddForm = () => {
 
     const promises: any[] = [];
 
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [titleImg, setTitleImg] = useState();
+    const [bodyImg, setBodyImg] = useState<File[]>([]);
     const [imageURLS, setImageURLS] = useState<any[]>([]);
     const [locationData, setLocationData] = useState<any[]>([]);
     const [newImageURLS, setNewImageURLS] = useState<any[]>([]);
@@ -46,31 +48,33 @@ const AddForm = () => {
 
     /// Start Image upload Code
 
-    const handleFileUpload = (e: any) => {
+    const handleTitleImgUpload = (e: any) => {
         /* List of files is "array-like" not an actual array
         * So we have to convert to file to an array an add it the array 
         * by destructuring it
         */
-        setSelectedFiles(selectedFiles => [...selectedFiles, ...e.target.files]);
+        setTitleImg(e.target.files[0]);
 
     };
 
-    const removeImage = (index: number) => {
-        const newFileList = [...selectedFiles];
-        newFileList.splice(index, 1);
-        setSelectedFiles(newFileList);
+    const handleBodyImgUpload = (e: any) => {
+        /* List of files is "array-like" not an actual array
+        * So we have to convert to file to an array an add it the array 
+        * by destructuring it
+        */
+        setBodyImg(e.target.files[0]);
+
+    };
+
+    const removeTitleImg = () => {
+        setTitleImg(undefined);
     }
 
-    const uploadImages = async () => {
-        await Promise.all(
-            selectedFiles.map(file => {
-                promises.push(storage
-                    .ref(`images/${file?.name}`)
-                    .put(file)
-                    .catch(error => alert(error.message)));
-            })
-        )
+    const removeBodyImg = () => {
+        setBodyImg([]);
     }
+
+
 
     const getImageURLS = async () => {
         await Promise.all(promises)
@@ -170,34 +174,32 @@ const AddForm = () => {
                 </LocalizationProvider>
             </Grid>
 
-            <Box sx={{ width: "100%", overflowX: "scroll" }}>
+            {/* <Grid item> */}
+            <Box sx={{ width: "100%", overflowX: "hidden" }}>
                 <Grid container rowSpacing={1} columnSpacing={{ xs: 1, sm: 2, md: 3 }}>
-                    {selectedFiles.length <= 0 ? <Box></Box>
+                    {
 
-                        :
+                        <Grid item xs={4}>
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    '& > :not(style)': {
+                                        m: 1,
+                                        width: 128,
+                                        height: 128,
+                                    },
+                                    padding: '16px'
+                                }}
+                            >
+                                <Badge badgeContent={<IconButton onClick={() => removeTitleImg()}> <CloseIcon sx={{ color: 'black', fontSize: 24 }} ></CloseIcon> </IconButton>} >
+                                    <Paper className="imgTile" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', }} elevation={2}>
+                                        <img src={titleImg ? URL.createObjectURL(titleImg) : ""} ></img>
+                                    </Paper>
+                                </Badge>
+                            </Box>
+                        </Grid>
 
-                        selectedFiles.map((file, key) => (
-                            <Grid item xs={4} key={key}>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        '& > :not(style)': {
-                                            m: 1,
-                                            width: 128,
-                                            height: 128,
-                                        },
-                                        padding: '16px'
-                                    }}
-                                >
-                                    <Badge badgeContent={<IconButton onClick={() => removeImage(key)}> <CloseIcon sx={{ color: 'black', fontSize: 24 }} >Test</CloseIcon> </IconButton>} >
-                                        <Paper className="imgTile" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', }} elevation={2}>
-                                            <img src={URL.createObjectURL(file)} ></img>
-                                        </Paper>
-                                    </Badge>
-                                </Box>
-                            </Grid>
-                        ))
 
                     }
 
@@ -215,7 +217,28 @@ const AddForm = () => {
                                     padding: '16px'
                                 }}
                             >
-                                <Input multiple accept="image/*" id="icon-button-file" type="file" onChange={handleFileUpload} />
+                                <Input accept="image/*" id="icon-button-file" type="file" onChange={handleTitleImgUpload} />
+                                <Paper sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', }} elevation={2}>
+                                    <AddIcon className="iconColour" sx={{ fontSize: 70 }} />
+                                </Paper>
+                            </Box>
+                        </label>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <label htmlFor="icon-button-file">
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    '& > :not(style)': {
+                                        m: 1,
+                                        width: 128,
+                                        height: 128,
+                                    },
+                                    padding: '16px'
+                                }}
+                            >
+                                <Input accept="image/*" id="icon-button-file" type="file" onChange={handleBodyImgUpload} />
                                 <Paper sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', }} elevation={2}>
                                     <AddIcon className="iconColour" sx={{ fontSize: 70 }} />
                                 </Paper>
@@ -224,6 +247,11 @@ const AddForm = () => {
                     </Grid>
                 </Grid>
             </Box>
+            {/* </Grid> */}
+
+            <Grid item>
+                <TextField id="releaseDate" value={releaseDate} onChange={e => setReleaseDate(e.target.value)} type="date" label="Release Date" variant="standard" margin="dense" />
+            </Grid>
             <Grid item>
                 <TextField id="eventTitle" value={eventTitle} onChange={e => setEventTitle(e.target.value)} label="Event Title" variant="standard" margin="dense" />
             </Grid>
