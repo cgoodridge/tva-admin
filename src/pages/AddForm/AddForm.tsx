@@ -22,6 +22,9 @@ import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import firebase from '../../firebase/firebaseConfig';
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+
 
 
 
@@ -66,15 +69,21 @@ const AddForm = () => {
     const [originalText, setOriginalText] = useState('');
     const [scenarioText, setScenarioText] = useState('');
     const [extraText, setExtraText] = useState('');
+    const [phaseText, setPhaseText] = useState('');
     const [eventLocation, setEventLocation] = useState<any[] | null>();
 
-    const [selectedTitleImage, setSelectedTitleImage] = useState<File | null>(null);
-    const [selectedBodyImage, setSelectedBodyImage] = useState<File | null>(null);
+    const [selectedTitleImage, setSelectedTitleImage] = useState<any>(null);
+    const [selectedBodyImage, setSelectedBodyImage] = useState<any>(null);
     const [imageURLS, setImageURLS] = useState<any[]>([]);
 
     const [checked, setChecked] = useState(false);
 
     const [variantValue, setVariantValue] = useState<any[] | null>();
+
+    const [percent, setPercent] = useState(0);
+
+    const [titleImg, setTitleImg] = useState('');
+    const [bodyImg, setBodyImg] = useState('');
 
     // console.log(inputValue);
 
@@ -98,17 +107,34 @@ const AddForm = () => {
     }
 
 
-    const [value, setValue] = useState<Moment | null>(
+    const [dateValue, setDateValue] = useState<Moment | null>(
         moment('2014-08-18T21:11:54'),
     );
 
-    /// Code for uploading gallery images
-    const Input = styled('input')({
-        display: 'none',
-    });
+    const [sliderValue, setSliderValue] = React.useState<number | string | Array<number | string>>(
+        1,
+    );
+
+    const handleSliderChange = (event: Event, newValue: number | number[]) => {
+
+        if (newValue === 1) {
+            setSliderValue(1);
+        }
+        if (newValue === 30) {
+            setSliderValue(2);
+        }
+        if (newValue === 60) {
+            setSliderValue(3);
+        }
+        if (newValue === 90) {
+            setSliderValue(4);
+        }
+
+    };
+
 
     const handleDateChange = (newValue: Moment | null) => {
-        setValue(newValue);
+        setDateValue(newValue);
     };
 
     const handleTitleImageUpload = (e: any) => {
@@ -129,6 +155,58 @@ const AddForm = () => {
 
     };
 
+    const uploadImages = async () => {
+
+        const storageTitleRef = ref(storage, `images/${primeEventTitle}/${selectedTitleImage}`);
+        const storageBodyRef = ref(storage, `images/${primeEventTitle}/${selectedBodyImage}`);
+
+        const uploadTitleTask = uploadBytesResumable(storageTitleRef, selectedTitleImage);
+        const uploadBodyTask = uploadBytesResumable(storageBodyRef, selectedBodyImage);
+
+        uploadTitleTask.on(
+            "state_changed",
+            (snapshot: any) => {
+                const percent = Math.round(
+                    (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                );
+
+                // update progress
+                setPercent(percent);
+            },
+            (err: any) => console.log(err),
+            () => {
+                // download url
+                getDownloadURL(uploadTitleTask.snapshot.ref).then((url: any) => {
+                    setTitleImg(url);
+                });
+            }
+        );
+
+        uploadBodyTask.on(
+            "state_changed",
+            (snapshot: any) => {
+                const percent = Math.round(
+                    (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                );
+
+                // update progress
+                setPercent(percent);
+            },
+            (err: any) => console.log(err),
+            () => {
+                // download url
+                getDownloadURL(uploadBodyTask.snapshot.ref).then((url: any) => {
+                    setBodyImg(url);
+                });
+            }
+        );
+
+        // storage
+        //     .ref(`images/${primeEventTitle}/${selectedTitleImage}`)
+        //     .put(selectedTitleImage)
+        //     .catch(error => alert(error.message));
+
+    }
 
 
     const addPrimeEvent = async () => {
@@ -138,11 +216,22 @@ const AddForm = () => {
             .doc()
             .set({
 
-                imgURLS: imageURLS,
+                phase: sliderValue,
+                hasNexusEvent: checked,
+                isNexusEvent: checked,
+                eventTitle: primeEventTitle,
+                introText: introText,
+                releaseDate: firebase.firestore.Timestamp.fromDate(moment(dateValue).toDate()),
+                scenarioText: "",
+                titleImg: titleImg,
+                bodyImg: bodyImg
 
             });
 
     };
+
+    console.log(titleImg);
+    console.log(bodyImg);
 
     const addNexusEvent = async () => {
 
@@ -158,11 +247,12 @@ const AddForm = () => {
             <LocalizationProvider dateAdapter={AdapterMoment}>
                 <DateTimePicker
                     label="Date&Time picker"
-                    value={value}
+                    value={dateValue}
                     onChange={handleDateChange}
                     renderInput={(params) => <TextField {...params} />}
                 />
             </LocalizationProvider>
+
             <TextField id="primeEventTitle" value={primeEventTitle} onChange={e => setPrimeEventTitle(e.target.value)} label="Prime Event Name" variant="standard" margin="dense" fullWidth />
 
             <Autocomplete
@@ -248,6 +338,11 @@ const AddForm = () => {
 
             </Grid>
 
+            <Grid>
+                {errorMessage && <div className="fail">{errorMessage}</div>}
+                <Button variant="outlined" disabled={!selectedTitleImage || !selectedBodyImage} onClick={uploadImages}>Upload Images</Button>
+            </Grid>
+
             <Grid item>
                 <Box sx={{ width: 300 }}>
                     <Slider
@@ -255,6 +350,7 @@ const AddForm = () => {
                         defaultValue={1}
                         valueLabelFormat={valueLabelFormat}
                         getAriaValueText={valuetext}
+                        onChange={handleSliderChange}
                         step={null}
                         valueLabelDisplay="auto"
                         marks={marks}

@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "tva-app-6ef40"
+  },
+  "targets": {
+    "tva-app-6ef40": {
+      "hosting": {
+        "tva-admin": [
+          "tva-admin"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
