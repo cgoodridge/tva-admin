@@ -9,13 +9,16 @@ import firebase from 'firebase/compat/app';
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 firebase.initializeApp({
-  apiKey: process.env.REACT_APP_API_KEY,
-  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
-  measurementId: process.env.REACT_APP_MEASUREMENT_ID,
+  experimentalForceLongPolling: true, // this line
+  useFetchStreams: false,
+  apiKey: 'AIzaSyA69XcZKbCS7iKpSflPJnoDIrcvZx0SuFQ',
+  authDomain: 'tva-app-6ef40.firebaseapp.com',
+  projectId: 'tva-app-6ef40',
+  storageBucket: 'tva-app-6ef40.appspot.com',
+  messagingSenderId: '94917028676',
+  measurementId: 'G-K8GN6WJ2HL',
   appId: "1:553317843027:web:89d438c60e5b2184e446a6"
 });
 
+console.log(process.env.REACT_APP_API_KEY);
 export default firebase;

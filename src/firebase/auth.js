@@ -2,8 +2,10 @@ import firebase from '../firebase/firebaseConfig';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
 import 'firebase/compat/storage';
+import '@firebase/database';
 
 import { collection } from 'firebase/firestore';
+
 
 
 export const database = firebase.firestore();

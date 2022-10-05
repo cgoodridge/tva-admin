@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TextField from '@mui/material/TextField';
 import { Grid } from "@mui/material";
 import Button from '@mui/material/Button';
@@ -26,8 +26,6 @@ import firebase from '../../firebase/firebaseConfig';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 
-
-
 const marks = [
     {
         value: 1,
@@ -46,6 +44,7 @@ const marks = [
         label: 'Phase 4',
     },
 ];
+
 function valuetext(value: number) {
     return `Phase ${value}`;
 }
@@ -106,7 +105,6 @@ const AddForm = () => {
         setSelectedBodyImage(null);
     }
 
-
     const [dateValue, setDateValue] = useState<Moment | null>(
         moment('2014-08-18T21:11:54'),
     );
@@ -132,7 +130,6 @@ const AddForm = () => {
 
     };
 
-
     const handleDateChange = (newValue: Moment | null) => {
         setDateValue(newValue);
     };
@@ -157,8 +154,8 @@ const AddForm = () => {
 
     const uploadImages = async () => {
 
-        const storageTitleRef = ref(storage, `images/${primeEventTitle}/${selectedTitleImage}`);
-        const storageBodyRef = ref(storage, `images/${primeEventTitle}/${selectedBodyImage}`);
+        const storageTitleRef = ref(storage, `movies/${primeEventTitle}/${selectedTitleImage}`);
+        const storageBodyRef = ref(storage, `movies/${primeEventTitle}/${selectedBodyImage}`);
 
         const uploadTitleTask = uploadBytesResumable(storageTitleRef, selectedTitleImage);
         const uploadBodyTask = uploadBytesResumable(storageBodyRef, selectedBodyImage);
@@ -185,19 +182,23 @@ const AddForm = () => {
         uploadBodyTask.on(
             "state_changed",
             (snapshot: any) => {
+
                 const percent = Math.round(
                     (snapshot.bytesTransferred / snapshot.totalBytes) * 100
                 );
 
                 // update progress
                 setPercent(percent);
+
             },
             (err: any) => console.log(err),
             () => {
+
                 // download url
                 getDownloadURL(uploadBodyTask.snapshot.ref).then((url: any) => {
                     setBodyImg(url);
                 });
+
             }
         );
 
@@ -209,32 +210,47 @@ const AddForm = () => {
     }
 
 
-    const addPrimeEvent = async () => {
 
-        database
-            .collection('timelineEvents')
-            .doc()
-            .set({
 
-                phase: sliderValue,
-                hasNexusEvent: checked,
-                isNexusEvent: checked,
-                eventTitle: primeEventTitle,
-                introText: introText,
-                releaseDate: firebase.firestore.Timestamp.fromDate(moment(dateValue).toDate()),
-                scenarioText: "",
-                titleImg: titleImg,
-                bodyImg: bodyImg
+    const addPrimeEvent = async (e: any) => {
 
-            });
+        e.preventDefault();
+
+        console.log({ sliderValue, checked, primeEventTitle });
+        try {
+            console.log("test");
+
+            database
+                .collection("timelineEvents")
+                .doc()
+                .set({
+
+                    phase: sliderValue,
+                    hasNexusEvent: checked,
+                    isNexusEvent: checked,
+                    eventTitle: primeEventTitle,
+                    introText: introText,
+                    releaseDate: firebase.firestore.Timestamp.fromDate(moment(dateValue).toDate()),
+                    scenarioText: "",
+                    titleImg: titleImg,
+                    bodyImg: bodyImg
+
+                }).then(() => {
+                    console.log('new test');
+                })
+
+        } catch (e) {
+            console.log(e)
+        }
+
 
     };
 
-    console.log(titleImg);
-    console.log(bodyImg);
+    // console.log(titleImg);
+    // console.log(bodyImg);
 
     const addNexusEvent = async () => {
-
+        console.log("Called from nexus event");
     };
 
     return (
@@ -381,7 +397,7 @@ const AddForm = () => {
 
             <Grid>
                 {errorMessage && <div className="fail">{errorMessage}</div>}
-                <Button variant="outlined" disabled={!eventDate || !eventTime || !eventLocation || !primeEventTitle} onClick={checked ? addNexusEvent : addPrimeEvent}>Submit</Button>
+                <Button variant="outlined" onClick={addPrimeEvent}>Submit</Button>
             </Grid>
 
         </Grid>
