@@ -69,11 +69,12 @@ const AddForm = () => {
     const [scenarioText, setScenarioText] = useState('');
     const [extraText, setExtraText] = useState('');
     const [phaseText, setPhaseText] = useState('');
-    const [eventLocation, setEventLocation] = useState<any[] | null>();
+    const [eventLocations, setEventLocations] = useState<any[] | null>();
 
     const [selectedTitleImage, setSelectedTitleImage] = useState<any>(null);
     const [selectedBodyImage, setSelectedBodyImage] = useState<any>(null);
     const [imageURLS, setImageURLS] = useState<any[]>([]);
+    const [eventCode, setEventCode] = useState("");
 
     const [checked, setChecked] = useState(false);
 
@@ -152,10 +153,17 @@ const AddForm = () => {
 
     };
 
+    const codeGenerator = (min: number, max: number) => {
+
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+
+    }
+
+
     const uploadImages = async () => {
 
-        const storageTitleRef = ref(storage, `movies/${primeEventTitle}/${selectedTitleImage}`);
-        const storageBodyRef = ref(storage, `movies/${primeEventTitle}/${selectedBodyImage}`);
+        const storageTitleRef = ref(storage, `movies/${primeEventTitle}/title_img`);
+        const storageBodyRef = ref(storage, `movies/${primeEventTitle}/body_img`);
 
         const uploadTitleTask = uploadBytesResumable(storageTitleRef, selectedTitleImage);
         const uploadBodyTask = uploadBytesResumable(storageBodyRef, selectedBodyImage);
@@ -216,9 +224,10 @@ const AddForm = () => {
 
         e.preventDefault();
 
-        console.log({ sliderValue, checked, primeEventTitle });
+        setEventCode("4" + codeGenerator(100000000, 9999999999).toString());
+
+
         try {
-            console.log("test");
 
             database
                 .collection("timelineEvents")
@@ -228,7 +237,10 @@ const AddForm = () => {
                     phase: sliderValue,
                     hasNexusEvent: checked,
                     isNexusEvent: checked,
-                    eventTitle: primeEventTitle,
+                    code: eventCode,
+                    primeEventTitle: primeEventTitle,
+                    eventVariants: variantValue,
+                    eventLocations: eventLocations,
                     introText: introText,
                     releaseDate: firebase.firestore.Timestamp.fromDate(moment(dateValue).toDate()),
                     scenarioText: "",
@@ -236,7 +248,15 @@ const AddForm = () => {
                     bodyImg: bodyImg
 
                 }).then(() => {
-                    console.log('new test');
+                    setSliderValue("");
+                    setChecked(false);
+                    setPrimeEventTitle("");
+                    setVariantValue([]);
+                    setEventLocations([]);
+                    setIntroText("");
+                    setTitleImg("");
+                    setBodyImg("");
+                    setScenarioText("");
                 })
 
         } catch (e) {
@@ -244,14 +264,69 @@ const AddForm = () => {
         }
 
 
+
+
     };
 
-    // console.log(titleImg);
-    // console.log(bodyImg);
 
-    const addNexusEvent = async () => {
-        console.log("Called from nexus event");
+    const addNexusEvent = async (e: any) => {
+        e.preventDefault();
+
+        setEventCode("4" + codeGenerator(100000000, 9999999999).toString());
+
+        uploadImages().then(() => {
+            try {
+
+                database
+                    .collection("events")
+                    .doc()
+                    .set({
+
+                        phase: sliderValue,
+                        hasNexusEvent: checked,
+                        code: eventCode,
+                        isNexusEvent: checked,
+                        primeEventTitle: primeEventTitle,
+                        eventVariants: variantValue,
+                        eventLocations: eventLocations,
+                        introText: introText,
+                        releaseDate: firebase.firestore.Timestamp.fromDate(moment(dateValue).toDate()),
+                        scenarioText: "",
+                        titleImg: titleImg,
+                        bodyImg: bodyImg,
+                        originalText: originalText,
+                        bodyText: nexusBodyText,
+                        changedText: changedText,
+
+
+                    }).then(() => {
+                        setSliderValue("");
+                        setChecked(false);
+                        setPrimeEventTitle("");
+                        setVariantValue([]);
+                        setEventLocations([]);
+                        setIntroText("");
+                        setTitleImg("");
+                        setBodyImg("");
+                        setScenarioText("");
+                    })
+
+            } catch (e) {
+                console.log(e)
+            }
+        });
     };
+
+
+    const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+
+    useEffect(() => {
+        return database.collection('timelineEvents').orderBy('releaseDate', 'asc').onSnapshot((snapshot) => {
+            const timelineEventData: any[] = [];
+            snapshot.forEach(doc => timelineEventData.push({ ...doc.data(), id: doc.id, name: doc.data().name, phase: doc.data().phase, releaseDate: doc.data().releaseDate }));
+            setTimelineEvents(timelineEventData);
+        });
+    }, []);
 
     return (
 
@@ -260,6 +335,14 @@ const AddForm = () => {
                 Add New Timeline Event
             </Typography>
 
+            <div className="pastEvents">
+                {timelineEvents.map((event) => {
+                    console.log(timelineEvents);
+                    return (
+                        <p key={event.id}> {event.eventTitle} | </p>
+                    )
+                })}
+            </div>
             <LocalizationProvider dateAdapter={AdapterMoment}>
                 <DateTimePicker
                     label="Date&Time picker"
@@ -276,8 +359,8 @@ const AddForm = () => {
                 id="eventLocation"
                 options={[]}
                 defaultValue={[]}
-                onChange={(event, newVariantValue) => {
-                    setEventLocation(newVariantValue);
+                onChange={(event, newLocationValue) => {
+                    setEventLocations(newLocationValue);
                 }}
                 freeSolo
                 renderInput={(params: any) => (
@@ -313,7 +396,7 @@ const AddForm = () => {
             />
 
 
-            <TextField id="primeBodyText" value={primeBodyText} onChange={e => setPrimeBodyText(e.target.value)} label="Prime Event Description" variant="standard" margin="dense" fullWidth multiline />
+            {/* <TextField id="primeBodyText" value={primeBodyText} onChange={e => setPrimeBodyText(e.target.value)} label="Prime Event Description" variant="standard" margin="dense" fullWidth multiline /> */}
 
             <Grid item container sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <h3>Title Image</h3>
@@ -383,7 +466,7 @@ const AddForm = () => {
             {checked ?
                 <>
                     <TextField id="nexusEventTitle" value={nexusEventTitle} onChange={e => setNexusEventTitle(e.target.value)} label="Nexus Event Name" variant="standard" margin="dense" fullWidth />
-                    <TextField id="nexusBodyText" value={nexusBodyText} onChange={e => setNexusBodyText(e.target.value)} label="Nexus Event description" variant="standard" margin="dense" fullWidth multiline />
+                    <TextField id="nexusBodyText" value={nexusBodyText} onChange={e => setNexusBodyText(e.target.value)} label="Nexus Event Description" variant="standard" margin="dense" fullWidth multiline />
                     <TextField id="scenarioText" value={scenarioText} onChange={e => setScenarioText(e.target.value)} label="Scenario Text" variant="standard" margin="dense" fullWidth />
                     <TextField id="originalText" value={originalText} onChange={e => setOriginalText(e.target.value)} label="Original Text" variant="standard" margin="dense" fullWidth />
                     <TextField id="changedText" value={changedText} onChange={e => setChangedText(e.target.value)} label="Changed Text" variant="standard" margin="dense" fullWidth />
