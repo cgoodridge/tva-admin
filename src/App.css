@@ -45,3 +45,7 @@
   align-items: space-between;
   justify-content: space-between;
 }
+
+.success {
+  color: green;
+}

@@ -26,6 +26,23 @@ import firebase from '../../firebase/firebaseConfig';
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 
+// interface Event {
+//     bodyImg?: string,
+//     titleImg?: string ,
+//     releaseDate?: Date,
+//     eventLocations?: Array<String>,
+//     eventTitle?: string,
+//     eventVariants?: Array<String>,
+//     hasNexusEvent?: boolean,
+//     isNexusEvent?: boolean,
+//     pageTitle?: string,
+//     previousEvent?: Date,
+//     scenarioText?: string,
+//     timelinePoint?: number,
+
+//   }
+
+
 const marks = [
     {
         value: 1,
@@ -55,7 +72,10 @@ function valueLabelFormat(value: number) {
 
 const AddForm = () => {
 
+    const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
+
     const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [eventDate, setEventDate] = useState('');
     const [eventTime, setEventTime] = useState('');
     const [primeEventTitle, setPrimeEventTitle] = useState('');
@@ -69,6 +89,7 @@ const AddForm = () => {
     const [scenarioText, setScenarioText] = useState('');
     const [extraText, setExtraText] = useState('');
     const [phaseText, setPhaseText] = useState('');
+    const [timelinePoint, setTimelinePoint] = useState('');
     const [eventLocations, setEventLocations] = useState<any[] | null>();
 
     const [selectedTitleImage, setSelectedTitleImage] = useState<any>(null);
@@ -107,7 +128,7 @@ const AddForm = () => {
     }
 
     const [dateValue, setDateValue] = useState<Moment | null>(
-        moment('2014-08-18T21:11:54'),
+        moment(),
     );
 
     const [sliderValue, setSliderValue] = React.useState<number | string | Array<number | string>>(
@@ -205,6 +226,8 @@ const AddForm = () => {
                 // download url
                 getDownloadURL(uploadBodyTask.snapshot.ref).then((url: any) => {
                     setBodyImg(url);
+                    setSuccessMessage('Images Uploaded Successfully')
+
                 });
 
             }
@@ -239,13 +262,66 @@ const AddForm = () => {
                     isNexusEvent: checked,
                     code: eventCode,
                     primeEventTitle: primeEventTitle,
+                    pageTitle: primeEventTitle,
+                    eventVariants: variantValue,
+                    eventLocations: eventLocations,
+                    introText: introText,
+                    releaseDate: firebase.firestore.Timestamp.fromDate(moment(dateValue).toDate()),
+                    scenarioText: "",
+                    timelinePoint: (timelineEvents.slice(-1)[0].timelinePoint) + 100,
+                    titleImg: titleImg,
+                    bodyImg: bodyImg
+
+                }).then(() => {
+                    setSliderValue("");
+                    setChecked(false);
+                    setPrimeEventTitle("");
+                    setVariantValue([]);
+                    setEventLocations([]);
+                    setIntroText("");
+                    setTitleImg("");
+                    setBodyImg("");
+                    setScenarioText("");
+                    setSelectedTitleImage(null);
+                    setSelectedBodyImage(null);
+                })
+
+        } catch (e) {
+            console.log(e)
+        }
+
+    };
+
+    const addNexusEvent = async (e: any) => {
+        e.preventDefault();
+
+        setEventCode("4" + codeGenerator(100000000, 9999999999).toString());
+
+
+        try {
+
+            database
+                .collection("events")
+                .doc()
+                .set({
+
+                    phase: sliderValue,
+                    hasNexusEvent: checked,
+                    code: eventCode,
+                    isNexusEvent: checked,
+                    eventTitle: primeEventTitle,
+                    pageTitle: primeEventTitle,
                     eventVariants: variantValue,
                     eventLocations: eventLocations,
                     introText: introText,
                     releaseDate: firebase.firestore.Timestamp.fromDate(moment(dateValue).toDate()),
                     scenarioText: "",
                     titleImg: titleImg,
-                    bodyImg: bodyImg
+                    bodyImg: bodyImg,
+                    originalText: originalText,
+                    bodyText: nexusBodyText,
+                    changedText: changedText,
+
 
                 }).then(() => {
                     setSliderValue("");
@@ -263,62 +339,10 @@ const AddForm = () => {
             console.log(e)
         }
 
-
-
-
     };
 
 
-    const addNexusEvent = async (e: any) => {
-        e.preventDefault();
 
-        setEventCode("4" + codeGenerator(100000000, 9999999999).toString());
-
-        uploadImages().then(() => {
-            try {
-
-                database
-                    .collection("events")
-                    .doc()
-                    .set({
-
-                        phase: sliderValue,
-                        hasNexusEvent: checked,
-                        code: eventCode,
-                        isNexusEvent: checked,
-                        primeEventTitle: primeEventTitle,
-                        eventVariants: variantValue,
-                        eventLocations: eventLocations,
-                        introText: introText,
-                        releaseDate: firebase.firestore.Timestamp.fromDate(moment(dateValue).toDate()),
-                        scenarioText: "",
-                        titleImg: titleImg,
-                        bodyImg: bodyImg,
-                        originalText: originalText,
-                        bodyText: nexusBodyText,
-                        changedText: changedText,
-
-
-                    }).then(() => {
-                        setSliderValue("");
-                        setChecked(false);
-                        setPrimeEventTitle("");
-                        setVariantValue([]);
-                        setEventLocations([]);
-                        setIntroText("");
-                        setTitleImg("");
-                        setBodyImg("");
-                        setScenarioText("");
-                    })
-
-            } catch (e) {
-                console.log(e)
-            }
-        });
-    };
-
-
-    const [timelineEvents, setTimelineEvents] = useState<any[]>([]);
 
     useEffect(() => {
         return database.collection('timelineEvents').orderBy('releaseDate', 'asc').onSnapshot((snapshot) => {
@@ -336,13 +360,13 @@ const AddForm = () => {
             </Typography>
 
             <div className="pastEvents">
-                {timelineEvents.map((event) => {
-                    console.log(timelineEvents);
+                {timelineEvents.map((event, key) => {
                     return (
                         <p key={event.id}> {event.eventTitle} | </p>
                     )
                 })}
             </div>
+
             <LocalizationProvider dateAdapter={AdapterMoment}>
                 <DateTimePicker
                     label="Date&Time picker"
@@ -439,6 +463,7 @@ const AddForm = () => {
 
             <Grid>
                 {errorMessage && <div className="fail">{errorMessage}</div>}
+                {successMessage ? <div className="success">{successMessage}</div> : <></>}
                 <Button variant="outlined" disabled={!selectedTitleImage || !selectedBodyImage} onClick={uploadImages}>Upload Images</Button>
             </Grid>
 
